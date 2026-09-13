@@ -28,11 +28,34 @@ def load_modulo100(raw_path: Path) -> pd.DataFrame:
     df = pd.read_stata(file_path, columns=columns_to_use)
     return df
 
+def transform_wide_to_long(df: pd.DataFrame, id_cols: list) -> pd.DataFrame:
+    """
+    Transforma el DataFrame de formato ancho a formato largo
+
+    Args:
+        df (pd.DataFrame): DataFrame en formato ancho
+        id_cols (list): Lista de columnas que se mantendrán como identificadores
+    """
+    columnas_temporales = [col for col in df.columns if col not in id_cols]
+    stubs = list(set([col.rsplit("_",1)[0] for col in columnas_temporales if "_" in col]))
+
+    df = pd.wide_to_long(
+        df,
+        stubnames = stubs,
+        i = id_cols,
+        j = "year",
+        sep = "_",
+        suffix = r"\d+"
+    ).reset_index()
+    return df
+
+
+
+
 
 if __name__ == "__main__":
     print("Iniciando bloque ETL para procesamiento de datos...")
+    df_mod100_wide = load_modulo100(RAW_PATH)
+    df_mod100_long = transform_wide_to_long(df_mod100_wide, id_cols=["numpanh"])
 
-    df_mod100 = load_modulo100(RAW_PATH)
-
-    print(f"Módulo 100 cargado con éxito. Dimensiones: {df_mod100.shape}")
-    print(df_mod100.head())
+    print(df_mod100_long.head())
