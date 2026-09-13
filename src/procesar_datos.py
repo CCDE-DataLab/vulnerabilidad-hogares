@@ -53,6 +53,28 @@ def load_modulo200(raw_path: Path) -> pd.DataFrame:
 
     return df
 
+def load_modulo500(raw_path: Path) -> pd.DataFrame:
+    """
+    Carga el módulo 500 de la Enaho Panel, filtrando solo las columnas necesarias para el proyecto
+    """
+    file_path = raw_path / "enaho01a-2015-2019-500-panel_01.dta"
+
+    formato_base = ["conglome","vivienda","hogar","p507","p512b"]
+    columns_to_use = [f"{col}_{year}" for year in range(15,20) for col in formato_base]
+
+    numpanh_cols = [f"numpanh{year}" for year in range(15,20)]
+
+    columns_to_use.extend(numpanh_cols)
+    columns_to_use.insert(0, "numper")
+
+    print(f"Cargando los datos del módulo 500 desde:\n {file_path}\n Columnas a usar: {columns_to_use}")
+    df = pd.read_stata(file_path, columns=columns_to_use)
+
+    rename_dict = {f"numpanh{year}": f"numpanh_{year}" for year in range(15, 20)}
+    df.rename(columns=rename_dict, inplace=True)
+    
+    return df
+
 
 # Función ETL para el módulo sumaria:
 def load_sumaria(raw_path: Path) -> pd.DataFrame:
@@ -105,6 +127,10 @@ if __name__ == "__main__":
     df_mod200_wide = load_modulo200(RAW_PATH)
     df_mod200_long = transform_wide_to_long(df_mod200_wide, id_cols=["numper"])
 
+    print("Cargando y transformando el módulo 500\n")
+    df_mod500_wide = load_modulo500(RAW_PATH)
+    df_mod500_long = transform_wide_to_long(df_mod500_wide, id_cols = ["numper"])
+
 
     print("Cargando y transformando el módulo sumaria")
     df_sumaria_wide = load_sumaria(RAW_PATH)
@@ -112,21 +138,31 @@ if __name__ == "__main__":
 
 
     ##########################################
-    ####AGREGAR MÓDULO 200 (nivel persona a nivel hogar)
+    ####AGREGAR MÓDULOS NIVEL PERSONA A NIVEL HOGAR
     ##########################################
-    print("Agregando el módulo 200 a nivel persona a nivel hogar")
-    df_miembros = df_mod200_long[df_mod200_long["p204"] == 1].copy()
+    print("Agregando el módulo 200 y 500 a nivel persona a nivel hogar")
 
-    df_demografia = df_miembros.groupby(["numpanh","year"]).agg(
-        n_miembros = ("numper","count")
+    df_personas = pd.merge(df_mod200_long,df_mod500_long, on = ["numpanh","numper","year"], how = "left")
+    df_miembros = df_personas[df_personas["p204"] == 1].copy()
+    df_miembros["ocupado"] = df_miembros["p507"].notna().astype(int)
+
+
+    df_hogar_agregado = df_miembros.groupby(["numpanh","year"]).agg(
+        n_miembros = ("numper","count"), #Cantidad de miembros del hogar
+        n_ocupados = ("ocupado","sum") #Cantidade de personas ocupadas
     ).reset_index()
+
+
 
     ###########################################
     ##### Merge final de las bases de datos
     ###########################################
-    print("Cruzando las bases de datos")
+    print("Cruzando las bases de datos...\n")
 
     df_final = pd.merge(df_mod100_long, df_sumaria_long, on=["numpanh","year"], how="left")
-    df_final = pd.merge(df_final, df_demografia, on=["numpanh","year"], how="left")
+    df_final = pd.merge(df_final, df_hogar_agregado, on=["numpanh","year"], how="left")
 
+
+    print(f"Columnas finales del modelo:\n{df_final.columns.to_list()}\n")
+    print(f"Dimensiones de la base final:\n{df_final.shape}")
     print(df_final.head())
