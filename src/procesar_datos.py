@@ -138,30 +138,56 @@ if __name__ == "__main__":
 
 
     ##########################################
-    ####AGREGAR MÓDULOS NIVEL PERSONA A NIVEL HOGAR
+    #### AGREGAR MÓDULOS NIVEL PERSONA A NIVEL HOGAR
     ##########################################
-    print("Agregando el módulo 200 y 500 a nivel persona a nivel hogar")
+    print("Agregando el módulo 200 y 500 a nivel persona a nivel hogar...")
 
-    df_personas = pd.merge(df_mod200_long,df_mod500_long, on = ["numpanh","numper","year"], how = "left")
-    df_miembros = df_personas[df_personas["p204"] == 1].copy()
+    df_personas = pd.merge(df_mod200_long, df_mod500_long, on=["numpanh", "numper", "year"], how="left")
+
+    # 1. CORRECCIÓN VITAL: Forzar a que la llave de cruce sea numérica en todas las bases 
+    # para evitar problemas en los cruces posteriores (el bug de los NaN)
+    df_mod100_long["numpanh"] = pd.to_numeric(df_mod100_long["numpanh"], errors="coerce")
+    df_sumaria_long["numpanh"] = pd.to_numeric(df_sumaria_long["numpanh"], errors="coerce")
+    df_personas["numpanh"] = pd.to_numeric(df_personas["numpanh"], errors="coerce")
+
+    # 2. Filtrar a los miembros reales. 
+    # Ojo: pd.read_stata suele cargar los labels como texto. 
+    # Usamos .astype(str) para asegurarnos de que atrape el "1" o el "si"
+    df_miembros = df_personas[df_personas["p204"].astype(str).str.contains("1|si", case=False, na=False)].copy()
+    
+    # 3. Variable de ocupación
     df_miembros["ocupado"] = df_miembros["p507"].notna().astype(int)
 
-
-    df_hogar_agregado = df_miembros.groupby(["numpanh","year"]).agg(
-        n_miembros = ("numper","count"), #Cantidad de miembros del hogar
-        n_ocupados = ("ocupado","sum") #Cantidade de personas ocupadas
+    # 4. Agrupación base (n_miembros y n_ocupados)
+    df_hogar_agregado = df_miembros.groupby(["numpanh", "year"]).agg(
+        n_miembros=("numper", "count"),
+        n_ocupados=("ocupado", "sum")
     ).reset_index()
 
+    # 5. EXTRACCIÓN DEL JEFE DE HOGAR (Feature Engineering)
+    # Filtramos a los jefes (puede venir como '1' o 'jefe/jefa')
+    es_jefe = df_miembros["p203"].astype(str).str.lower().str.contains("jefe|1", na=False)
+    df_jefes = df_miembros[es_jefe].copy()
+    
+    # Seleccionamos las variables clave y las renombramos
+    df_jefes = df_jefes[["numpanh", "year", "p207", "p208a"]].rename(columns={
+        "p207": "sexo_jefe",
+        "p208a": "edad_jefe"
+    })
+    
+    # Eliminamos duplicados por si algún hogar encuestado por error tiene 2 jefes
+    df_jefes = df_jefes.drop_duplicates(subset=["numpanh", "year"])
 
+    # Agregamos las variables del jefe a nuestro resumen de hogar
+    df_hogar_agregado = pd.merge(df_hogar_agregado, df_jefes, on=["numpanh", "year"], how="left")
 
     ###########################################
     ##### Merge final de las bases de datos
     ###########################################
-    print("Cruzando las bases de datos...\n")
+    print("Cruzando las bases de datos maestras...\n")
 
-    df_final = pd.merge(df_mod100_long, df_sumaria_long, on=["numpanh","year"], how="left")
-    df_final = pd.merge(df_final, df_hogar_agregado, on=["numpanh","year"], how="left")
-
+    df_final = pd.merge(df_mod100_long, df_sumaria_long, on=["numpanh", "year"], how="left")
+    df_final = pd.merge(df_final, df_hogar_agregado, on=["numpanh", "year"], how="left")
 
     print(f"Columnas finales del modelo:\n{df_final.columns.to_list()}\n")
     print(f"Dimensiones de la base final:\n{df_final.shape}")
