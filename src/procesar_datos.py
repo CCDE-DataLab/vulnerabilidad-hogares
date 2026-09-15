@@ -166,3 +166,34 @@ if __name__ == "__main__":
     print(f"Columnas finales del modelo:\n{df_final.columns.to_list()}\n")
     print(f"Dimensiones de la base final:\n{df_final.shape}")
     print(df_final.head())
+
+
+    ###########################################
+    #### 4.- Limpieza y creación de la TARGET
+    ###########################################
+    print("Limpiando nulos y creando la variable objetivo (Target Multinomial)...")
+    
+    df_final = df_final.dropna(subset=["pobreza"])
+    df_final["pobreza_bin"] = np.where(df_final["pobreza"] == "no pobre", 0, 1)
+
+    df_final.sort_values(by=["numpanh", "year"], inplace=True)
+    df_final["pobreza_futura"] = df_final.groupby("numpanh")["pobreza_bin"].shift(-1)
+
+    # Creación de variable target multicategórica
+    condiciones = [
+        ((df_final["pobreza_bin"] == 0) & (df_final["pobreza_futura"] == 0)),
+        ((df_final["pobreza_bin"] == 0) & (df_final["pobreza_futura"] == 1)),
+        ((df_final["pobreza_bin"] == 1) & (df_final["pobreza_futura"] == 0)),
+        ((df_final["pobreza_bin"] == 1) & (df_final["pobreza_futura"] == 1))
+    ]
+    
+    # 0: Resiliente, 1: Cae, 2: Escapa, 3: Crónico
+    resultados = [0, 1, 2, 3]
+    df_final["target_multinomial"] = np.select(condiciones, resultados, default=np.nan)
+
+    df_final.dropna(subset=["pobreza_futura"], inplace=True)
+
+    print(f"\nDimensiones de la base lista para el modelo: {df_final.shape}")
+    print("\nDistribución del Target Multinomial:")
+    print("0: Se mantiene No Pobre | 1: Cae en Pobreza | 2: Sale de Pobreza | 3: Se mantiene Pobre")
+    print(df_final["target_multinomial"].value_counts().sort_index())
