@@ -224,5 +224,9 @@ if __name__ == "__main__":
     print("0: Se mantiene No Pobre | 1: Cae en Pobreza | 2: Sale de Pobreza | 3: Se mantiene Pobre")
     print(df_final["target_multinomial"].value_counts().sort_index())
 
+
+    columnas_texto = df_final.select_dtypes(include=["object","category"]).columns
+    df_final[columnas_texto] = df_final[columnas_texto].astype(str)
     ruta_bd = PROCESSED_PATH / "data_pobreza.parquet"
     df_final.to_parquet(ruta_bd,index = False)
+    print(f"\nBase exportada con éxito en: {ruta_bd}")
