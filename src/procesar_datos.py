@@ -223,3 +223,6 @@ if __name__ == "__main__":
     print("\nDistribución del Target Multinomial:")
     print("0: Se mantiene No Pobre | 1: Cae en Pobreza | 2: Sale de Pobreza | 3: Se mantiene Pobre")
     print(df_final["target_multinomial"].value_counts().sort_index())
+
+    ruta_bd = PROCESSED_PATH / "data_pobreza.parquet"
+    df_final.to_parquet(ruta_bd,index = False)
