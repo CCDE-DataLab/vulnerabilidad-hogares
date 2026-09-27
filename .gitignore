@@ -1,4 +1,4 @@
-# ------------------------------------
+﻿# ------------------------------------
 # 1. Carpetas de Datos y Documentación
 # ------------------------------------
 # Ignorar los microdatos crudos (pesados) pero mantener la carpeta
@@ -7,7 +7,7 @@ data/raw/
 # Ignorar los PDFs y cuestionarios
 bibliography/
 
-# (Opcional) Si en algún momento procesed/ se vuelve muy pesado, 
+# (Opcional) Si en algún momento processed/ se vuelve muy pesado, 
 # puedes descomentar la siguiente línea, pero por ahora déjalo así para compartir resultados:
 # data/processed/
 
@@ -16,12 +16,14 @@ bibliography/
 # ------------------------------------
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 .ipynb_checkpoints/
 
 # ------------------------------------
 # 3. Entornos Virtuales y Variables
 # ------------------------------------
+.venv/
+.venv*/
 venv/
 env/
 .env
