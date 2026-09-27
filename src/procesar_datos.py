@@ -205,6 +205,10 @@ if __name__ == "__main__":
     df_final.sort_values(by=["numpanh", "year"], inplace=True)
     df_final["pobreza_futura"] = df_final.groupby("numpanh")["pobreza_bin"].shift(-1)
 
+    #Eliminamos los casos en los que la diferencia entre el año actual y el siguiente no sea 1
+    df_final["year_futuro"] = df_final.groupby("numpanh")["year"].shift(-1)
+    df_final = df_final[df_final["year_futuro"] - df_final["year"] == 1]
+    df_final = df_final.drop(columns = ["year_futuro"],axis=1)
     # Creación de variable target multicategórica
     condiciones = [
         ((df_final["pobreza_bin"] == 0) & (df_final["pobreza_futura"] == 0)),
