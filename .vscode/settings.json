@@ -1,6 +1,9 @@
 ﻿{
     "python.defaultInterpreterPath": "/.venv/Scripts/python.exe",
     "python.terminal.activateEnvironment": true,
+    "jupyter.codeLens.enable": true,
+    "editor.codeLens": true,
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
     "terminal.integrated.profiles.windows": {
         "PowerShell": {
             "source": "PowerShell",
