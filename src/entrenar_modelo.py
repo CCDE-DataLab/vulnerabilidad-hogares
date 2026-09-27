@@ -20,6 +20,15 @@ def cargar_datos():
     print("Cargando base de datos procesada...\n")
 
     df = pd.read_parquet(PROCESSED_PATH/"data_pobreza.parquet")
+    
+
+    mapa_cambios = {
+        "local no destinado para habitación humana": "otra vivienda",
+        "otro": "otra vivienda",
+        "vivienda improvisada": "otra vivienda"
+        }
+    df["p101"] = df["p101"].replace(mapa_cambios)
+    df = df[df["p101"] != "nan"]
 
     columnas_excluir = ["numpanh", "year", "conglome", "vivienda", "hogar", "pobreza", "pobreza_futura","pobreza_bin"]
     #se remueve pobreza_futura para evitar dataleak
