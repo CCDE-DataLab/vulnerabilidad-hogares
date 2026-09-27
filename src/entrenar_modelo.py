@@ -18,8 +18,9 @@ def cargar_datos():
 
     df = pd.read_parquet(PROCESSED_PATH/"data_pobreza.parquet")
 
-    columnas_id = ["numpanh", "year", "conglome", "vivienda", "hogar", "pobreza"]
-    X = df.drop(columns=columnas_id + ["target_multinomial"])
+    columnas_excluir = ["numpanh", "year", "conglome", "vivienda", "hogar", "pobreza", "pobreza_futura","pobreza_bin"]
+    #se remueve pobreza_futura para evitar dataleak
+    X = df.drop(columns=columnas_excluir + ["target_multinomial"])
     y = df["target_multinomial"]
 
     return X, y
