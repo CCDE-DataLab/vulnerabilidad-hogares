@@ -1,0 +1,19 @@
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\Jesús\Documents\CCDE\vulnerabilidad-hogares/reports/modelo_pobreza_stata.log
+  log type:  text
+ opened on:  28 Oct 2026, 11:21:04
+
+. 
+. *------------------------------------------------------------------------------*
+. * [1] Carga de datos
+. *------------------------------------------------------------------------------*
+. use "$DATA/data_pobreza.dta", clear
+file C:\Users\Jesús\Documents\CCDE\vulnerabilidad-hogares/data/processed/data_pobreza.dta not found
+r(601);
+
+end of do-file
+
+r(601);
+
+. exit, clear
