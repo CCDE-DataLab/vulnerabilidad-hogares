@@ -1,8 +1,9 @@
-﻿# ------------------------------------
+# ------------------------------------
 # 1. Carpetas de Datos y Documentación
 # ------------------------------------
 # Ignorar los microdatos crudos (pesados) pero mantener la carpeta
-data/raw/
+data/raw/*
+!data/raw/.gitkeep
 
 # Ignorar los PDFs y cuestionarios
 bibliography/
